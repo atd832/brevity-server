@@ -24,7 +24,7 @@ def accept_incoming_connections():
     while True:
         client, client_address = SERVER.accept()
         print("%s:%s has connected." % client_address)
-        client.send(bytes("Greetings from the cave! Now type your name and press enter!", "utf8"))
+        client.send(bytes("Welcome to the chat", "utf8"))
         addresses[client] = client_address
         Thread(target=handle_client, args=(client,)).start()
 
@@ -36,34 +36,40 @@ def update_clients(client):
         users.append(str(name))
 
     packet = bytes(users.val, "utf8")
-    client.send(packet)
+    try:
+        client.send(packet)
+    except OSError:
+        print('uh oh')
 
 
 def handle_client(client):  # Takes client socket as argument.
     """Handles a single client connection."""
 
     name = client.recv(BUFSIZ).decode("utf8")
-    welcome = 'Welcome %s! If you ever want to quit, type {quit} to exit.' % name
+    welcome = 'Welcome %s.' % name
     client.send(bytes(welcome, "utf8"))
-    msg = "%s has joined the chat!" % name
+    msg = "%s has joined the chat." % name
     broadcast(bytes(msg, "utf8"))
     clients[client] = name
 
     while True:
-        # TODO: send list of clients to client?
         update_clients(client)
-        msg = client.recv(BUFSIZ)
-        if msg != bytes("{quit}", "utf8"):
+        try:
+            msg = client.recv(BUFSIZ)
+        except ConnectionResetError:
+            # all have left
+            print("they're gone")
+            break
+        try:
             broadcast(msg, name + ": ")
-        else:
-            client.send(bytes("{quit}", "utf8"))
+        except OSError:
             client.close()
             del clients[client]
             # update again?
             update_clients(client)
+            # at least one is left
             broadcast(bytes("%s has left the chat." % name, "utf8"))
             break
-
 
 # want to update this to display all current client list
 def broadcast(msg, prefix=""):  # prefix is for name identification.
