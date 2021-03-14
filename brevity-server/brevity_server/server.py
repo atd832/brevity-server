@@ -1,6 +1,4 @@
-"""Server for multi-threaded (asynchronous) chat application."""
-
-import sys
+""" Server for asynchronous chat app """
 
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
@@ -20,7 +18,7 @@ SERVER.bind(ADDR)
 
 
 def accept_incoming_connections():
-    """Sets up handling for incoming clients."""
+    """ handling for incoming clients """
     while True:
         client, client_address = SERVER.accept()
         print("%s:%s has connected." % client_address)
@@ -29,7 +27,6 @@ def accept_incoming_connections():
         Thread(target=handle_client, args=(client,)).start()
 
 
-# TODO: needs to be rendered on server side
 def update_clients(client):
     users = RequestBuilder()
     users.header('USERS')
@@ -54,7 +51,6 @@ def handle_client(client):  # Takes client socket as argument.
     clients[client] = name
 
     while True:
-        update_clients(client)
         try:
             msg = client.recv(BUFSIZ)
         except ConnectionResetError:
@@ -64,12 +60,24 @@ def handle_client(client):  # Takes client socket as argument.
         try:
             broadcast(msg, name + ": ")
         except OSError:
-            del clients[client]
-            client.close()
-            update_clients(client)
+            # del clients[client]
+            # client.close()
+            # update_clients(client)
             # update again?
             broadcast(bytes("%s has left the chat." % name, "utf8"))
             break
+
+
+def check_status():
+    for sock in clients:
+        try:
+            sock.send(bytes('', "utf8"))
+        except sock.error:
+            clients.pop(sock)
+            sock.close()
+
+
+
 
 
 def broadcast(msg, prefix=""):  # prefix is for name identification.
