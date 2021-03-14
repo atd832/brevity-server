@@ -4,7 +4,7 @@ import sys
 
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
-from string_builder import StringBuilder
+from request_builder import RequestBuilder
 
 
 clients = {}
@@ -29,24 +29,25 @@ def accept_incoming_connections():
         Thread(target=handle_client, args=(client,)).start()
 
 
+# TODO: needs to be rendered on server side
 def update_clients(client):
-    users = StringBuilder()
+    users = RequestBuilder()
     users.header('USERS')
     for name in clients.values():
         users.append(str(name))
 
-    packet = bytes(users.val, "utf8")
+    packet = bytes(users.req, "utf8")
     try:
         client.send(packet)
     except OSError:
-        print('uh oh')
+        pass
 
 
 def handle_client(client):  # Takes client socket as argument.
     """Handles a single client connection."""
 
     name = client.recv(BUFSIZ).decode("utf8")
-    welcome = 'Welcome %s.' % name
+    welcome = 'Hello %s, welcome.' % name
     client.send(bytes(welcome, "utf8"))
     msg = "%s has joined the chat." % name
     broadcast(bytes(msg, "utf8"))
@@ -58,20 +59,19 @@ def handle_client(client):  # Takes client socket as argument.
             msg = client.recv(BUFSIZ)
         except ConnectionResetError:
             # all have left
-            print("they're gone")
+            print("All users have left the chat.")
             break
         try:
             broadcast(msg, name + ": ")
         except OSError:
-            client.close()
             del clients[client]
-            # update again?
+            client.close()
             update_clients(client)
-            # at least one is left
+            # update again?
             broadcast(bytes("%s has left the chat." % name, "utf8"))
             break
 
-# want to update this to display all current client list
+
 def broadcast(msg, prefix=""):  # prefix is for name identification.
     """Broadcasts a message to all the clients."""
 
