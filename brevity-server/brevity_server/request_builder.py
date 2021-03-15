@@ -9,7 +9,7 @@ class RequestBuilder:
         return self
 
     def header(self, h: str):
-        n = h.upper() + ' ' + self.val
+        n = h.upper() + ' ' + self.req
         self.req = n
         return self
 
