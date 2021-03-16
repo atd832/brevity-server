@@ -1,4 +1,4 @@
-from brevity_server.request_builder import StringBuilder
+from brevity_server.request import StringBuilder
 
 
 class TestStringBuilder:

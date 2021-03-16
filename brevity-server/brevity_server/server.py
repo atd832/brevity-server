@@ -2,7 +2,7 @@
 
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
-from request_builder import RequestBuilder
+from request import RequestBuilder, Request
 
 clients = {}
 addresses = {}
@@ -26,13 +26,11 @@ def accept_incoming_connections():
 		Thread(target=handle_client, args=(client,)).start()
 
 
-def update_clients(client):
-	users = RequestBuilder()
-	users.header('USERS')
-	for name in clients.values():
-		users.append(str(name))
+def update_clients():
+	user_data = {name: 1 for name in clients.values()}
+	users = Request('users', user_data)
 
-	packet = bytes(users.req, "utf8")
+	packet = bytes(str(users), "utf8")
 	for client in clients:
 		try:
 			client.send(packet)
@@ -51,18 +49,19 @@ def handle_client(client):  # Takes client socket as argument.
 	clients[client] = name
 
 	while True:
-		update_clients(client)
+		update_clients()
 		try:
 			msg = client.recv(BUFSIZ)
 		except ConnectionResetError:
 			# all have left
 			del clients[client]
-			update_clients(client)
+			update_clients()
 			client.close()
 			broadcast(bytes("%s has left the chat." % name, "utf8"))
 			print("%s:%s has disconnected." % addresses[client])
 			break
 		try:
+			# TODO: not broadcast when user data
 			broadcast(msg, name + ": ")
 		except OSError:
 			break
