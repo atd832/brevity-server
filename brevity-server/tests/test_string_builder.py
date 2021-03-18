@@ -4,7 +4,7 @@ from json import dumps
 
 class TestRequest:
 
-    def test_string_builder(self):
+    def test_request(self):
         s = Request('test', {})
         expected = dumps({'test': {}})
 
