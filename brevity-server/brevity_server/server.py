@@ -2,7 +2,7 @@
 
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
-from request import RequestBuilder, Request
+from request import Request
 
 clients = {}
 addresses = {}

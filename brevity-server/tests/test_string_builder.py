@@ -1,11 +1,11 @@
-from brevity_server.request import StringBuilder
+from brevity_server.request import Request
+from json import dumps
 
 
-class TestStringBuilder:
+class TestRequest:
 
     def test_string_builder(self):
-        s = StringBuilder()
-        s.header('header')
-        s.append('test')
+        s = Request('test', {})
+        expected = dumps({'test': {}})
 
-        assert s.val == 'HEADER test'
+        assert str(s) == expected
